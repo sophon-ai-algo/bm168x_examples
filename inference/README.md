@@ -10,7 +10,6 @@ Inference 提供一个简易的基于Pipeline的高性能加速框架，使用�
 |[bmutility](./bmutility) | 提供了特别多的基础库，字符串、定时器等
 |[cvs10](./cvs10) | 提供了算能一路的参考实现
 |[ddr_reduction](./ddr_reduction) | 提供一种节约DDR占用的软件实现方案
-|[examples](./examples) | 多个pipeline demo参考
 
 Inference的主要结构设计如下图： 
 
@@ -19,22 +18,20 @@ Inference的主要结构设计如下图：
 # 示例代码集成使用说明
 
 目录examples下有想相关的例子可以参考。目前提供了如下例子：
-难易程度 | 目录 | 说明 | 模型个数
-|---|---|---|---|
-入门 | [face_detect](./examples/face_detect) | Sequeezenet 人脸检测  | 1
-入门 | [retinaface](./examples/retinaface) | Retinaface 人脸检测 | 1
-入门 | [yolov5](./examples/yolov5) | yolov5s 对象检测 | 1
-进阶 | [openpose](./examples/openpose) | OpenPose 18/25个关键点 | 1
-进阶 | [multi](./examples/multi)  | 两个yolov5模型通过配置文件并行 | 2
-高级 | [face_recognition](./examples/face_recognition) | 演示多个模型如何串联 | 3
-高级 | [video_stitch](./examples/video_stitch) | 4路检检测+拼接+编码+RTSP服务 | 1
+| 目录 | 说明 | 模型个数
+|---|---|---| 
+| face_detect | Sequeezenet 人脸检测  | 1
+| face_recognition | 演示多个模型如何串联 | 3
+| openpose | OpenPose 18个关键点 | 1
+| retinaface | Retinaface 人脸检测 | 1
+| yolov5 | yolov5s 对象检测 | 1
 
 # 编译方法
 ## 依赖安装
-Inference framework 依赖 SophonSDK. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。  SDK的安装方法可以参考如下链接： 
-> https://sophgo-doc.gitbook.io/sophonsdk/
+Inference framework 依赖 BMNNSDK2. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。  bmnnsdk2的安装方法可以参考如下链接： 
+> https://sophgo-doc.gitbook.io/bmnnsdk2-bm1684/
 
-> Ubuntu 安装QT依赖：
+> Ubuntu 16.04 安装QT依赖：
 ````
 sudo apt install qtbase5-dev
 ````
@@ -50,7 +47,7 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 ```
 ## 编译指令
 ---
-1. export REL_TOP=$sdk_dir 根据实际位置修改为BMNNSDK跟路径
+1. export REL_TOP=$bmnnsdk_dir 根据实际位置修改为BMNNSDK跟路径
 2. 各个平台编译
    ---
    > **NOTE**  
@@ -83,9 +80,6 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
    
    链接：https://pan.baidu.com/s/16d5E_NTj4ubVPkPmR6GG5A 
    提取码：sp2w 
-   
-   > 特別注意:`openpose`的模型`openpose_200_200.bmodel`已弃用!!!
-   请使用[NAS网盘](http://219.142.246.77:65000/sharing/cyJOgo8Te)中的新openpose量化模型: `openpose_coco_17_216_384.bmodel`或`openpose_body_25_216_384.bmodel`
 
 ## 客户端服务器模式运行
 ---

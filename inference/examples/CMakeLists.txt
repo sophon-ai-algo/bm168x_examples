@@ -19,8 +19,6 @@ add_subdirectory(yolov5)
 add_subdirectory(face_recognition)
 add_subdirectory(safe_hat_detect)
 add_subdirectory(video_stitch)
-add_subdirectory(multi)
-
 if (${TARGET_ARCH} STREQUAL "x86")
     add_subdirectory(retinaface)
 endif()

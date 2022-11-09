@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 
     int total_num = parser.get<int>("num");
     Config cfg(config_file.c_str());
-    if (!cfg.valid_check()) {
+    if (!cfg.valid_check(total_num)) {
         std::cout << "ERROR:cameras.json config error, please check!" << std::endl;
         return -1;
     }

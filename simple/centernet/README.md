@@ -37,7 +37,7 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 ### 3.1 准备开发环境
 
-开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu18.04的docker镜像。
+开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，需要使用我们提供的基于Ubuntu16.04的docker镜像。
 
 运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM5模组、SE5边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
 
@@ -67,10 +67,17 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 
 #### 3.1.2 SDK软件包下载：
 
-- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/all.html)，请选择与SDK版本适配的docker镜像
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/44.html)，Ubuntu 16.04 with Python 3.7
 
-- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/all.html)，请选择与仓库代码分支对应的SDK版本
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+  ```
 
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/45.html)
+
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip
+  ```
 
 #### 3.1.3 创建docker开发环境：
 - 安装工具
@@ -82,25 +89,25 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
 - 加载docker镜像:
 
   ```bash
-  unzip <docker_image_file>.zip
-  cd <docker_image_file>
-  docker load -i <docker_image>
+  unzip bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+  cd bmnnsdk2-bm1684-ubuntu-docker-py37
+  docker load -i bmnnsdk2-bm1684-ubuntu.docker
   ```
 
 - 解压缩SDK：
 
   ```bash
-  unzip <sdk_zip_file>.zip
-  cd <sdk_zip_file>/
-  tar zxvf <sdk_file>.tar.gz
+  unzip bmnnsdk2_bm1684_v2.7.0_20220316_patched_0413.zip
+  cd bmnnsdk2_bm1684_v2.7.0_20220316_patched/
+  tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
   ```
 
 - 创建docker容器，SDK将被挂载映射到容器内部供使用：
 
   ```bash
-  cd <sdk_path>/
+  cd bmnnsdk2-bm1684_v2.7.0/
   # 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
-  ./docker_run_<***>sdk.sh
+  ./docker_run_bmnnsdk.sh
   ```
 
 - 进入docker容器中安装库：
@@ -111,42 +118,13 @@ CenterNet 是一种 anchor-free 的目标检测网络，不仅可以用于目标
   ./install_lib.sh nntc
   ```
 
-- 设置环境变量-[无PCIe加速卡]：
+- 设置环境变量：
 
   ```bash
-  # 配置环境变量,这一步会安装一些依赖库，并导出环境变量到当前终端
-  # 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
-  source envsetup_cmodel.sh
-  ```
-  
-- 设置环境变量-[有PCIe加速卡]：
-
-  ```bash
-  # 配置环境变量,这一步会安装一些依赖库,并导出环境变量到当前终端
+  # 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
   # 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
   source envsetup_pcie.sh
   ```
-
-- 安装python对应版本的sail包
-
-  ```bash
-  # the wheel package is in the SophonSDK:
-  pip3 uninstall -y sophon
-  # get your python version
-  python3 -V
-  # choose the same verion of sophon wheel to install
-  # the following py3x maybe py35, py36, py37 or py38
-  # for x86
-  pip3 install ../lib/sail/python3/pcie/py3x/sophon-?.?.?-py3-none-any.whl --user
-  ```
-#### 3.1.4 拷贝examples代码到容器
-请从[github](https://github.com/sophon-ai-algo/examples)下载代码，拷贝到容器内编译测试。
-github上centernet例程位于examples/simple/centernet/。
-
-`git clone https://github.com/sophon-ai-algo/examples.git`
-
-下载后，通过`docker cp <examples-dir> <container-id>:/workspace`的方式，拷贝到上一步的docker容器中
-> 下面操作，默认centernet路径在容器中路径为/workspace/examples_test
 
 ### 3.2 准备模型
 
@@ -157,15 +135,15 @@ github上centernet例程位于examples/simple/centernet/。
 
 
 #### 3.2.1 JIT环境准备
-SophonSDK中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
+BMNNSDK2中的PyTorch模型编译工具BMNETP只接受PyTorch的JIT模型（TorchScript模型）。
 
 JIT（Just-In-Time）是一组编译工具，用于弥合PyTorch研究与生产之间的差距。它允许创建可以在不依赖Python解释器的情况下运行的模型，并且可以更积极地进行优化。在已有PyTorch的Python模型（基类为torch.nn.Module）的情况下，通过torch.jit.trace就可以得到JIT模型，如`torch.jit.trace(python_model, torch.rand(input_shape)).save('jit_model')`。BMNETP暂时不支持带有控制流操作（如if语句或循环）的JIT模型，因此不能使用torch.jit.script，而要使用torch.jit.trace，它仅跟踪和记录张量上的操作，不会记录任何控制流操作。可在源码导入CPU模型后通过添加以下代码导出符合要求的JIT模型：
 
 ```bash
 # 下载dlav0作为主干网的预训练模型
-apt update
-apt install curl
-cd /workspace/examples_test/simple/centernet/data/scripts/
+sudo apt update
+sudo apt install curl
+cd ../examples/centernet/data/scripts/
 ./download_pt.sh
 # 下载成功后，文件位于../build/ctdet_coco_dlav0_1x.pth
 
@@ -198,7 +176,7 @@ cp ctdet_coco_dlav0_1x.torchscript.pt ../models
 我们选取其中的200张图片进行量化
 
 ```bash
-apt install unzip
+sudo apt install unzip
 cd ../scripts
 ./00_prepare.sh
 # 下载成功后，JPG文件位于../images文件夹中
@@ -212,8 +190,8 @@ cd ../scripts
 ### 4.1 生成FP32 BModel
 
 ```bash
-# SDK_PATH改为您SDK的根路径，如果您在docker内，则默认为/workspace
-pushd $SDK_PATH/scripts
+# SDKBMNNSDK_PATH改为您SDK的根路径，如果您在docker内，则默认为/workspace
+pushd $SDKBMNNSDK_PATH/scripts
 ./install_lib.sh nntc
 source envsetup_pcie.sh
 popd
@@ -242,14 +220,64 @@ host mem size: 0 (coeff: 0, runtime: 0)
 
 不量化模型可跳过本节。
 
+INT8 BModel的生成需要经历中间格式UModel，即：原始模型→FP32 UModel→INT8 UModel→INT8 BModel。
 
-执行以下命令，使用一键量化工具cali_model，生成INT8 BModel：
+执行以下命令，将依次调用以下步骤中的脚本，生成INT8 BModel：
 
 ```shell
 ./2_gen_int8bmodel.sh
+# 转换成功后，模型位于../models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel
 ```
-上述脚本会在`../models/`下生成`ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`，即转换好的INT8 BModel，使用`bm_model.bin --info`查看的模型具体信息如下
 
+### 4.2.1 生成LMDB
+
+需要将原始量化数据集转换成lmdb格式，供后续校准量化工具Quantization-tools 使用。更详细信息请参考：[准备LMDB数据集](https://doc.sophgo.com/docs/docs_latest_release/calibration-tools/html/module/chapter4.html#lmdb)。
+
+在docker开发容器中使用`ufw.io ` 工具从数据集图片生成LMDB文件，具体操作参见`convert_imageset.py`, 相关操作已被封装在 `scripts/20_create_lmdb.sh`中，执行如下命令即可：
+
+```
+./20_create_lmdb.sh
+```
+
+上述脚本会在`../images/`中生成`data.mdb`的文件
+请注意根据模型输入要求修改脚本中`convert_imageset`命令中的`resize_width`和`resize_height`等参数。
+
+#### 4.2.2 生成FP32 UModel
+
+执行以下命令，使用`ufw.pt_to_umodel`生成FP32 UModel，若不指定-D参数，可以在生成prototxt文件以后修改：
+
+```bash
+./21_gen_fp32umodel.sh
+```
+上述脚本会在`../build/int8model/`下生成`*_bmnetp_test_fp32.prototxt`、`*_bmnetp.fp32umodel`文件，即转换好的FP32 UModel。
+
+#### 4.2.3 修改FP32 UModel
+
+执行以下命令，修改FP32 UModel的prototxt文件即`ctdet_coco_dlav0_1x.torchscript_bmnetp_test_fp32.prototxt`，将输入层替换为Data层指向LMDB文件位置（若上一步已经指定-D参数，则无需操作），并使用`transform_op`完成需要进行的预处理；对于CenterNet来说，需要设置scale；如果`transform_op`无法完成要求的预处理，那么可以使用Python程序来生成LMDB文件：
+
+```bash
+./22_modify_fp32umodel.sh
+```
+
+#### 4.2.4 生成INT8 UModel
+
+执行以下命令，使用修改后的FP32 UModel文件生成INT8 UModel：
+
+```
+./23_gen_int8umodel.sh
+```
+
+上述脚本会在`../build/int8model/`下生成`*_bmnetp_deploy_fp32_unique_top.prototxt`、`*_bmnetp_deploy_int8_unique_top.prototxt`和`*_bmnetp.int8umodel`文件，即转换好的INT8 UModel。
+
+#### 4.2.5 生成INT8 BModel
+
+执行以下命令，使用生成的INT8 UModel文件生成INT8 BModel：
+
+```
+./24_gen_int8bmodel.sh
+```
+
+上述脚本会在`../models/`下生成`ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`，即转换好的INT8 BModel，使用`bm_model.bin --info`查看的模型具体信息如下：
 
 ```bash
 bmodel version: B.2.2
@@ -264,23 +292,26 @@ input: input.1, [4, 3, 512, 512], int8, scale: 60.4494
 output: 40, [4, 84, 128, 128], float32, scale: 1
 
 device mem size: 78307080 (coeff: 18616328, instruct: 147200, runtime: 59543552)
-host mem size: 0 (coeff: 0, runtime: 0)
+host mem size: 0 (coeff: 0, runtime: 0
 ```
+
+由于量化模型通常存在精度损失，当使用默认脚本生成的量化模型精度不能满足需求时，可能需要修改量化策略并借助自动量化工具auto-calib寻找最优结果，甚至在必要时需要将某些量化精度损失较大的层单独设置为使用fp32推理，相关调试方法请参考[《量化工具用户开发手册》](https://doc.sophgo.com/docs/docs_latest_release/calibration-tools/html/index.html)。
+
 
 ## 5. 部署测试
 
-测试图片见`/workspace/examples_test/simple/centernet/data/`，转换好的bmodel文件可以放置于`/workspace/examples_test/simple/centernet/data/models`。
+测试图片见`data/`，转换好的bmodel文件可以放置于`data/models`。
 
 
 ### 5.1 环境配置
 
-#### 5.1.1 x86 PCIe
+#### 5.1.1 x86 SC5
 
-对于x86 with PCIe加速卡平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
+对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成
 
-#### 5.1.2 arm SoC
+#### 5.1.2 arm SE5
 
-对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
+对于arm SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
 ```bash
 # 设置环境变量
@@ -289,27 +320,25 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-lin
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
 
-如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
+您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
 
 ```bash
-# 对于Debian9，请指定numpy版本为1.17.2
+# 请指定numpy版本为1.17.2
 sudo apt update
 sudo apt-get install python3-pip
-sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
+sudo pip3 install numpy==1.17.2
 ```
-
-如果您使用的设备是Ubuntu20.04系统，系统内已经集成了numpy环境，不需要进行额外的安装。
 
 ### 5.2 C++例程部署测试
 
-#### 5.2.1 x86平台 PCIe加速卡
+#### 5.2.1 x86平台SC5
 
 - 编译
 
 ```bash
-$ cd /workspace/examples_test/simple/centernet/cpp_bmcv_sail
+$ cd ../../cpp_bmcv_sail
 # 先手动修改Makefile.pcie里的top_dir地址，指向实际SDK的根路径
-# docker容器中，默认为/workspace，请根据实际挂载的SDK路径进行修改
+# docker容器中，默认为/workspace
 $ make -f Makefile.pcie # 生成centernet_bmcv_sail.pcie
 ```
 
@@ -324,7 +353,7 @@ $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_51
 # 4batch
 $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=../data/ctdet_test.jpg
 # 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx-bx.jpg格式的图片
-# 按照量化结果差异，图片上检测出11-13个目标，均属正常范围
+# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
 
 #### 5.2.2 arm平台SE5
@@ -335,17 +364,15 @@ $ ./centernet_bmcv_sail.pcie --bmodel=../data/models/ctdet_coco_dlav0_1output_51
 
 ```bash
 $ cd cpp_bmcv_sail
-# 先手动修改Makefile.arm里的top_dir地址，指向实际SDK的根路径
-# docker容器中，默认为/workspace，请根据实际挂载的SDK路径进行修改
 $ make -f Makefile.arm # 生成centernet_bmcv_sail.arm
 ```
 
 - 将以下文件拷贝到盒子中同一个目录中，进行测试
 1. `centernet_bmcv_sail.arm`
-2. `/workspace/examples_test/simple/centernet/data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel`
-3. `/workspace/examples_test/simple/centernet/data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`
-4. `/workspace/examples_test/simple/centernet/data/ctdet_test.jpg`
-5. `/workspace/examples_test/simple/centernet/data/coco_classes.txt`
+2. `../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel`
+3. `../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel`
+4. `../data/ctdet_test.jpg`
+5. `../data/coco_classes.txt`
 ```bash
 # 1batch
 $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --image=ctdet_test.jpg
@@ -355,21 +382,21 @@ $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_fp32_1batch.bm
 # 4batch
 $ ./centernet_bmcv_sail.arm --bmodel=ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --image=ctdet_test.jpg
 # 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_bx.jpg格式的图片
-# 按照量化结果差异，图片上检测出11-13个目标，均属正常范围
+# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
 
 ### 5.3 Python例程部署测试
 
 Python代码无需编译，无论是x86 SC平台还是arm SE5平台配置好环境之后就可直接运行。
 > 运行之前需要安装sail包
-
+ 
 #### 5.3.1 x86平台PCIe模式
 ```bash
 # 在容器里, 以python3.7的docker为例
 cd /workspace/lib/sail/python3/pcie/py37
 pip3 install sophon-2.7.0-py3-none-any.whl
 
-cd /workspace/examples_test/simple/centernet/py_bmcv_sail
+cd /workspace/examples/centernet/py_bmcv_sail
 
 # 1batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../data/ctdet_test.jpg
@@ -379,11 +406,11 @@ python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav
 # 4batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../data/models/ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../data/ctdet_test.jpg
 # 执行完毕后，在当前目录生成ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg格式的图片
-# 按照量化结果差异，图片上检测出11-13个目标，均属正常范围
+# 按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 ```
 
 1. 如果是fp32的模型，图片有11个框
-2. 如果是int8的模型，按照量化结果差异，图片上检测出11-13个目标，均属正常范围
+2. 如果是int8的模型，按照量化结果差异，图片上检测出11-12个目标，均属正常范围
 
 > **使用SAIL模块的注意事项：**对于INT8 BModel来说，当输入输出为int8时，含有scale，需要在处理时将输入输出乘以相应的scale。使用SAIL接口推理时，当sail.Engine.process()接口输入为numpy时，SAIL内部会自动乘以scale，用户无需操作；而输入为Tensor时，需要手动在数据送入推理接口前乘以scale。
 > 这是因为Tensor作为输入的话，一般图像来源就是bm_image，这样就可以直接调用vpp进行scale等操作，所以推理之前由用户乘以scale更高效；而在python接口中，当numpy作为输入的话，推理之前没办法调用vpp，sail内部使用SSE指令进行了加速。
@@ -395,5 +422,5 @@ cd py_bmcv_sail
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../ctdet_coco_dlav0_1output_512_int8_4batch.bmodel --input=../ctdet_test.jpg --class_path=../coco_classes.txt
 # 4batch
 python3 det_centernet_bmcv_sail_1b_4b.py --bmodel=../ctdet_coco_dlav0_1output_512_fp32_1batch.bmodel --input=../ctdet_test.jpg --class_path=../coco_classes.txt
-```
+ ```
 成功后，在当前目录下生成和`5.3.1`相同的`ctdet_result_20xx-xx-xx-xx-xx-xx_b_x.jpg`图片

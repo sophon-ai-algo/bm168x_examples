@@ -1,6 +1,4 @@
 #!/bin/bash
-apt update
-apt install curl
 
 script_dir=$(dirname $(readlink -f "$0"))
 root_dir=$script_dir/..

@@ -1,18 +1,14 @@
 import os
-import sys
-
-__dir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(__dir__)
 import shutil
 import numpy as np
 import cv2
 import argparse
 import configparser
-from yolact_utils.preprocess_bmcv import PreProcess
-from yolact_utils.postprocess_numpy import PostProcess
-from yolact_utils.sophon_inference import SophonInference
+from utils.preprocess_bmcv import PreProcess
+from utils.postprocess_numpy import PostProcess
+from utils.sophon_inference import SophonInference
 import sophon.sail as sail
-from yolact_utils.utils import draw_bmcv, draw_numpy, is_img
+from utils.utils import draw_bmcv, draw_numpy, is_img
 
 
 class Detector(object):
@@ -26,8 +22,7 @@ class Detector(object):
         if not os.path.exists(bmodel_path):
             raise FileNotFoundError('{} is not existed.'.format(bmodel_path))
         self.net = SophonInference(model_path=bmodel_path,
-                                   device_id=device_id,
-                                   input_mode=1)
+                                   device_id=device_id)
         print('{} is loaded.'.format(bmodel_path))
 
         self.conf_thresh = conf_thresh
@@ -38,15 +33,9 @@ class Detector(object):
         self.bmcv = self.net.bmcv
         self.handle = self.net.handle
         self.input_scale = list(self.net.input_scales.values())[0]
-        self.img_dtype = list(self.net.img_dtypes.values())[0]
 
         self.batch_size = self.net.inputs_shapes[0][0]
-        self.preprocess = PreProcess(
-            self.cfg,
-            self.batch_size,
-            self.img_dtype,
-            self.input_scale,
-        )
+        self.preprocess = PreProcess(self.cfg,  self.batch_size, self.input_scale)
         self.postprocess = PostProcess(
             self.cfg,
             self.conf_thresh,
@@ -134,8 +123,8 @@ def main(opt):
         opt.cfgfile,
         opt.model,
         device_id=opt.dev_id,
-        conf_thresh=opt.conf_thresh,
-        nms_thresh=opt.nms_thresh,
+        conf_thresh=opt.thresh,
+        nms_thresh=opt.nms,
         keep_top_k=opt.keep,
     )
 
@@ -344,9 +333,9 @@ def parse_opt():
     parser.add_argument('--cfgfile', type=str, help='model config file')
     parser.add_argument('--model', type=str, help='bmodel path')
     parser.add_argument('--dev_id', type=int, default=0, help='device id')
-    image_path = os.path.join(os.path.dirname(__file__),"../data/images/000000162415.jpg")
-    parser.add_argument('--conf_thresh', type=float, default=0.5, help='confidence threshold')
-    parser.add_argument('--nms_thresh', type=float, default=0.5, help='nms threshold')
+    image_path = os.path.join(os.path.dirname(__file__),"../data/images")
+    parser.add_argument('--thresh', type=float, default=0.5, help='confidence threshold')
+    parser.add_argument('--nms', type=float, default=0.5, help='nms threshold')
     parser.add_argument('--keep', type=int, default=100, help='keep top-k')
     parser.add_argument('--is_video', default=0, type=int, help="input is video?")
     parser.add_argument('--input_path', type=str, default=image_path, help='input image path')
@@ -357,4 +346,3 @@ def parse_opt():
 if __name__ == "__main__":
     opt = parse_opt()
     main(opt)
-    print('all done.')

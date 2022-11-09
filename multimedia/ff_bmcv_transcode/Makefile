@@ -4,10 +4,10 @@ PRODUCTFORM  ?= soc
 
 INSTALL_DIR    ?= release
 
-top_dir := $(REL_TOP)
+top_dir :=../../..
 
-ifeq ($(PRODUCTFORM),pcie) # pcie mode
-   CROSS_CC_PREFIX = 
+ifeq ($(PRODUCTFORM),x86) # pcie mode
+    CROSS_CC_PREFIX = x86_64-linux-
 endif
 
 ifeq ($(PRODUCTFORM),soc) # soc mode
@@ -18,9 +18,9 @@ ifeq ($(PRODUCTFORM),arm_pcie) # pcie_arm64
     CROSS_CC_PREFIX = aarch64-linux-gnu-
 endif
 
-#ifeq ($(PRODUCTFORM),loongarch64)
-#    CROSS_CC_PREFIX = loongarch64-linux-gnu-
-#endif
+ifeq ($(PRODUCTFORM),loongarch64)
+    CROSS_CC_PREFIX = loongarch64-linux-gnu-
+endif
 
 CC  = $(CROSS_CC_PREFIX)gcc
 CXX = $(CROSS_CC_PREFIX)g++
@@ -61,7 +61,7 @@ FF_SDK_LDLIBS  := -lavfilter -lavformat -lavcodec -lswscale -lavutil -lswresampl
 
 CPPFLAGS += $(NATIVE_SDK_HEADERS) $(FF_SDK_HEADERS)
 LDFLAGS  := $(NATIVE_SDK_LDFLAGS) $(FF_SDK_LDFLAGS)
-LDLIBS   := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lstdc++ -lpthread -lm
+LDLIBS   := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lstdc++ -lpthread
 
 ifeq ($(PRODUCTFORM),loongarch64)
 LDLIBS   += -lm  -lresolv  -lrt  -ldl

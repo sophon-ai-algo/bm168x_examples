@@ -7,7 +7,6 @@ option(HAVE_TRACKER "Enable tracker" ON)
 option(USE_BM_FFMPEG "Use bm ffmpeg" ON)
 option(USE_BM_OPENCV "Use bm opencv" ON)
 option(USE_QTGUI "Whether has GUI support" OFF)
-option(CMODEL_MODE "Run in cmodel mode" OFF)
 
 add_compile_options(-Wno-deprecated-declarations -fPIC)
 
@@ -49,18 +48,15 @@ set(bm_opencv_inc_dirs  ${BMNNSDK2_TOP}/include/opencv/opencv4)
 set(bm_ffmpeg_inc_dirs  ${BMNNSDK2_TOP}/include/ffmpeg ${BMNNSDK2_TOP}/include/bmlib)
 set(bm_ffmpeg_link_libs avfilter avformat avcodec avutil avdevice swresample swscale)
 set(bm_opencv_link_libs opencv_core opencv_imgproc opencv_imgcodecs opencv_videoio opencv_dnn)
-if (CMODEL_MODE)
-  set(bmnnsdk_link_libs bmrt bmcv bmlib boost_system boost_filesystem protobuf gflags glog pthread
+
+set(bmnnsdk_link_libs bmrt bmcv bmvideo bmjpuapi bmjpulite bmlib boost_system boost_filesystem protobuf gflags glog pthread
         CACHE INTERNAL "")
-else()
-  set(bmnnsdk_link_libs bmrt bmcv bmvideo bmjpuapi bmjpulite bmlib boost_system boost_filesystem protobuf gflags glog pthread CACHE INTERNAL "")
-endif()
 
 if (${TARGET_ARCH} STREQUAL "x86")
-    set(bm_ffmpeg_link_dirs ${BMNNSDK2_TOP}/lib/ffmpeg/pcie ${BMNNSDK2_TOP}/lib/decode/pcie
+    set(bm_ffmpeg_link_dirs ${BMNNSDK2_TOP}/lib/ffmpeg/x86 ${BMNNSDK2_TOP}/lib/decode/x86
             ${BMNNSDK2_TOP}/lib/bmnn/pcie
             ${BMNNSDK2_TOP}/lib/thirdparty/x86)
-    set(bm_opencv_link_dirs ${BMNNSDK2_TOP}/lib/opencv/pcie)
+    set(bm_opencv_link_dirs ${BMNNSDK2_TOP}/lib/opencv/x86)
     set(bmnnsdk_link_dirs ${BMNNSDK2_TOP}/lib/bmnn/pcie)
 
 elseif (${TARGET_ARCH} STREQUAL "arm64")
@@ -86,7 +82,7 @@ if (USE_BM_FFMPEG)
 else()
     set(ffmpeg_inc_dirs /usr/local/include CACHE INTERNAL "")
     set(ffmpeg_link_dirs /usr/local/lib CACHE INTERNAL "")
-    set(ffmpeg_link_libs avcodec avutil avformat swscale avdevice CACHE INTERNAL "")
+    set(ffmpeg_link_libs avcodec avutil avformat swscale CACHE INTERNAL "")
 endif()
 
 if (USE_BM_OPENCV)
@@ -119,11 +115,6 @@ add_subdirectory(third_party/live555)
 
 if (USE_BM_FFMPEG)
    add_subdirectory(examples)
-   if (HAVE_TRACKER)
-       add_subdirectory(tracker)
-       add_subdirectory(cvs10)
-   endif()
-else()
    if (HAVE_TRACKER)
        add_subdirectory(tracker)
        add_subdirectory(cvs10)

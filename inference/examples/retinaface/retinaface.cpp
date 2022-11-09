@@ -205,23 +205,6 @@ int Retinaface::preprocess(
             bm_image image;
             if (frame.original.width) {
                 image = frame.original;
-#if 0
-                bm_image out;
-                if (FORMAT_COMPRESSED == image.image_format) {
-                    call(bm::BMImage::bm_image_uncompress,
-                         handle, image, FORMAT_YUV420P, DATA_TYPE_EXT_1N_BYTE, out);
-                } else {
-                    out = image;
-                }
-
-                uint8_t *jpeg_data=NULL;
-                size_t out_size = 0;
-    #if USE_QTGUI
-                bmcv_image_jpeg_enc(handle, 1, &out, (void**)&jpeg_data, &out_size);
-    #endif
-                frame.jpeg_data = std::make_shared<bm::Data>(jpeg_data, out_size);
-                call(bm_image_destroy, out);
-#endif
             } else if (!frame.filename.empty())
             {
                 image = this->read_image(frame);

@@ -1,13 +1,13 @@
 //
 // Created by yuan on 2/22/21.
 //
-
+ 
 #include "opencv2/opencv.hpp"
 #include <sys/time.h>
 #include "bmutility.h"
 #include "inference3.h"
 #include "bm_tracker.h"
-
+ 
 /*
 struct FrameBaseInfo {
     int chan_id;
@@ -23,7 +23,7 @@ struct FrameBaseInfo {
         width = height = 0;
     }
 };
-
+ 
 struct FrameInfo {
     std::vector<FrameBaseInfo> frames;
     std::vector<bm_tensor_t> input_tensors;
@@ -31,13 +31,13 @@ struct FrameInfo {
     std::vector<bm::NetOutputDatum> datums;
 };
  */
-
+ 
 class YoloV5 : public bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
     int MAX_BATCH = 1;
     bm::BMNNContextPtr m_bmctx;
     bm::BMNNNetworkPtr m_bmnet;
     int m_net_h, m_net_w;
-
+ 
     //configuration
     float m_confThreshold= 0.5;
     float m_nmsThreshold = 0.5;
@@ -50,21 +50,21 @@ class YoloV5 : public bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
                                                          {{116, 90}, {156, 198}, {373, 326}}};
     const int m_anchor_num = 3;
     std::map<int, std::shared_ptr<bm::BMTracker>> m_trackerPerChanel;
-
+ 
 public:
     YoloV5(bm::BMNNContextPtr bmctx, int start_chan, int chan_num, int max_batch=1);
     ~YoloV5();
-
+ 
     virtual int preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo>& frame_info) override ;
     virtual int forward(std::vector<bm::FrameInfo>& frame_info) override ;
     virtual int postprocess(std::vector<bm::FrameInfo> &frame_info) override;
     virtual int track(std::vector<bm::FrameInfo> &frames) override;
-
+ 
 private:
     float sigmoid(float x);
     int argmax(float* data, int dsize);
     static float get_aspect_scaled_ratio(int src_w, int src_h, int dst_w, int dst_h, bool *alignWidth);
     void NMS(bm::NetOutputObjects &dets, float nmsConfidence);
-
+ 
     void extract_yolobox_cpu(bm::FrameInfo& frameInfo);
 };

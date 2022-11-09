@@ -114,7 +114,7 @@ public:
         return m_cards[index].urls;
     }
 
-    bool valid_check() {
+    bool valid_check(int total) {
         if (m_cards.size() == 0) return false;
 
         for(int i = 0;i < m_cards.size(); ++i) {

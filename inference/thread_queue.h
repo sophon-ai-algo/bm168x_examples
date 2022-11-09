@@ -17,8 +17,6 @@
 #include <pthread.h>
 #include "bmutility_timer.h"
 
-static int cpu_index = 0;
-
 template <typename T>
 class BlockingQueue {
 private:
@@ -42,8 +40,6 @@ private:
                     pthread_cond_wait(&m_pop_cond, &m_qmtx);
                 } while (m_limit > 0 && this->size_impl() >= m_limit && !m_stop);
             }
-        } else if (this->size_impl() >= m_warning && !m_stop && this->size_impl() % 100 == 0) {
-            //std::cout << "WARNING: " << m_name << " queue_size is " << this->size_impl() << std::endl;
         }
 
         if (m_type == 0)
@@ -55,8 +51,8 @@ private:
     }
 
 public:
-    BlockingQueue(const std::string& name="" ,int type=0, int limit = 0, int warning = 32)
-        : m_stop(false), m_limit(limit), m_drop_fn(nullptr), m_warning(warning) {
+    BlockingQueue(const std::string& name="" ,int type=0, int limit = 0)
+        : m_stop(false), m_limit(limit), m_drop_fn(nullptr) {
         m_name = name;
         m_type = type;
         pthread_mutex_init(&m_qmtx, NULL);
@@ -264,7 +260,6 @@ private:
     pthread_mutex_t m_qmtx;
     pthread_cond_t m_condv, m_pop_cond;
     int m_type, m_limit; //0:queue,1:vector
-    int m_warning;
     std::function<void(T& obj)> m_drop_fn;
 };
 
@@ -291,6 +286,7 @@ public:
         return 0;
     }
 
+
     int startWork(OnWorkItemsCallback fn) {
         m_work_item_func = fn;
 
@@ -307,26 +303,10 @@ public:
                     m_work_item_func(items);
                 }
             });
-            //setCPU(*pth);
+
             m_threads.push_back(pth);
         }
         return 0;
-    }
-
-    void setCPU(std::thread &th) {
-        static int cpu_count = std::thread::hardware_concurrency();
-        cpu_set_t  cpuset;
-        CPU_ZERO(&cpuset);
-        CPU_SET(cpu_index++ % cpu_count, &cpuset);
-        int ret = pthread_setaffinity_np(th.native_handle(),
-                                         sizeof(cpu_set_t),
-                                         &cpuset);
-        if (ret != 0) {
-            std::cerr << "[ERROR] caling pthread_setaffinity_np failed" << std::endl;
-            exit(-1);
-        } else {
-            std::cout<< "[SUCCESS] caling pthread_setaffinity_np success, " << cpu_index << std::endl;
-        }
     }
 
     int stopWork() {

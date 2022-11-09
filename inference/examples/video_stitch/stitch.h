@@ -1,13 +1,13 @@
 #ifndef _VIDEO_STITCH_STITCH_H_
 #define _VIDEO_STITCH_STITCH_H_
-
+ 
 #include <thread>
 #include <mutex>
 #include "opencv2/opencv.hpp"
 #include "bmutility.h"
 #include "encoder.h"
 #include "inference3.h"
-
+ 
 class VideoStitchImpl : public bm::MediaDelegate<bm::FrameBaseInfo, bm::FrameInfo> {
     struct SFrameAndBbox{
         AVFrame* avframe;
@@ -21,15 +21,15 @@ class VideoStitchImpl : public bm::MediaDelegate<bm::FrameBaseInfo, bm::FrameInf
     };
 public:
     VideoStitchImpl(int chann_start, int chann_count, std::shared_ptr<CVEncoder> &encoder);
-
+ 
     ~VideoStitchImpl();
-
+ 
     int draw(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameInfo>& output) override;
-
+ 
     int stitch(std::vector<bm::FrameInfo>& frames, std::vector<bm::FrameBaseInfo>& output) override;
-
+ 
     int encode(std::vector<bm::FrameBaseInfo> &frames) override;
-
+ 
     inline bool setHandle(bm_handle_t handle) { m_handle = handle; }
 private:
     int m_chan_start;
@@ -43,7 +43,7 @@ private:
     bm_handle_t m_handle;
 private:
     void fpsControl_(uint64_t msec_interval);
-
+ 
     void dataInput_(std::vector<bm::FrameInfo>& frames);
 };
 #endif // _VIDEO_STITCH_STITCH_H_

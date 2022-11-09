@@ -1,7 +1,7 @@
 //
 // Created by yuan on 3/4/21.
 //
-
+ 
 #ifndef INFERENCE_FRAMEWORK_WORKER_H
 #define INFERENCE_FRAMEWORK_WORKER_H
 #include "bmutility.h"
@@ -11,7 +11,7 @@
 #include "configuration.h"
 #include "yolov5s.h"
 #include "encoder.h"
-
+ 
 struct TChannel: public bm::NoCopyable {
     int channel_id;
     uint64_t seq;
@@ -20,14 +20,14 @@ struct TChannel: public bm::NoCopyable {
     TChannel():channel_id(0), seq(1), decoder(nullptr) {
         outputer = nullptr;
     }
-
+ 
     ~TChannel() {
         if (decoder) delete decoder;
         std::cout << "TChannel(chan_id=" << channel_id << ") dtor" <<std::endl;
     }
 };
 using TChannelPtr = std::shared_ptr<TChannel>;
-
+ 
 class OneCardInferApp {
     bm::VideoUIAppPtr m_guiReceiver;
     std::shared_ptr<bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo>> m_detectorDelegate;
@@ -39,7 +39,7 @@ class OneCardInferApp {
     int m_skipN;
     std::string m_output_url;
     int m_max_batch;
-
+ 
     bm::BMInferencePipe<bm::FrameBaseInfo, bm::FrameInfo> m_inferPipe;
     std::map<int, TChannelPtr> m_chans;
     std::vector<std::string> m_urls;
@@ -56,18 +56,18 @@ public:
         //m_output_url = output_url;
         m_max_batch = max_batch;
     }
-
+ 
     ~OneCardInferApp()
     {
         std::cout << cv::format("OneCardInfoApp (devid=%d) dtor", m_dev_id) <<std::endl;
     }
-
+ 
     void setDetectorDelegate(std::shared_ptr<bm::DetectorDelegate<bm::FrameBaseInfo, bm::FrameInfo>> delegate){
         m_detectorDelegate = delegate;
     }
-
+ 
     void start(const std::vector<std::string>& vct_urls, Config& config);
-
+ 
     inline void loadConfig(bm::DetectorParam& param, Config& config) {
         SConcurrencyConfig cfg;
         if (config.get_phrase_config("preprocess", cfg)){
@@ -84,8 +84,8 @@ public:
         }
     }
 };
-
+ 
 using OneCardInferAppPtr = std::shared_ptr<OneCardInferApp>;
-
-
+ 
+ 
 #endif //INFERENCE_FRAMEWORK_MAIN_H

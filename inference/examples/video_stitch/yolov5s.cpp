@@ -1,11 +1,11 @@
 //
 // Created by hsyuan on 2021-02-22.
 //
-
+ 
 #include "yolov5s.h"
 #define USE_ASPECT_RATIO 1
 #define USE_MULTICLASS_NMS 1
-
+ 
 YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int start_chan, int chan_num, int max_batch):m_bmctx(bmctx),MAX_BATCH(max_batch)
 {
     // the bmodel has only one yolo network.
@@ -14,27 +14,27 @@ YoloV5::YoloV5(bm::BMNNContextPtr bmctx, int start_chan, int chan_num, int max_b
     assert(m_bmnet != nullptr);
     assert(m_bmnet->inputTensorNum() == 1);
     auto tensor = m_bmnet->inputTensor(0);
-
+ 
     //YOLOV5 input is NCHW
     m_net_h = tensor->get_shape()->dims[2];
     m_net_w = tensor->get_shape()->dims[3];
-
+ 
     for (int i = start_chan; i < start_chan + chan_num; ++i) {
         m_trackerPerChanel.insert(std::make_pair(i, bm::BMTracker::create()));
     }
     
 }
-
+ 
 YoloV5::~YoloV5()
 {
-
+ 
 }
-
+ 
 int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::FrameInfo>& frame_infos)
 {
     int ret = 0;
     bm_handle_t handle = m_bmctx->handle();
-
+ 
     // Check input
     int total = frames.size();
     int left = (total%MAX_BATCH == 0 ? MAX_BATCH: total%MAX_BATCH);
@@ -46,14 +46,14 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
             // last one
             num = left;
         }
-
+ 
         bm::FrameInfo finfo;
         finfo.handle = handle;
         //1. Resize
         bm_image resized_imgs[MAX_BATCH];
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_RGB_PLANAR, DATA_TYPE_EXT_1N_BYTE, resized_imgs, num, 64);
         assert(BM_SUCCESS == ret);
-
+ 
         for(int i = 0;i < num; ++i) {
             bm_image image1;
            // bm::BMImage::from_avframe(handle, frames[start_idx + i].avframe, image1, false);
@@ -91,7 +91,7 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
             ret = bmcv_image_vpp_convert(handle, 1, image1, &resized_imgs[i]);
 #endif
             assert(BM_SUCCESS == ret);
-
+ 
             // convert data to jpeg
 //            uint8_t *jpeg_data=NULL;
 //            size_t out_size = 0;
@@ -108,11 +108,11 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
             finfo.frames.push_back(frames[start_idx+i]);
             //bm_image_destroy(image1);
         }
-
+ 
         //2. Convert to
         bm_image convertto_imgs[MAX_BATCH];
         float alpha, beta;
-
+ 
         bm_image_data_format_ext img_type = DATA_TYPE_EXT_FLOAT32;
         auto inputTensorPtr = m_bmnet->inputTensor(0);
         if (inputTensorPtr->get_dtype() == BM_INT8) {
@@ -125,16 +125,16 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
             beta             = 0.0;
             img_type = DATA_TYPE_EXT_FLOAT32;
         }
-
+ 
         ret = bm::BMImage::create_batch(handle, m_net_h, m_net_w, FORMAT_RGB_PLANAR, img_type, convertto_imgs, num, 1, false, true);
         assert(BM_SUCCESS == ret);
-
+ 
         bm_tensor_t input_tensor = *inputTensorPtr->bm_tensor();
         bm::bm_tensor_reshape_NCHW(handle, &input_tensor, num, 3, m_net_h, m_net_w);
-
+ 
         ret = bm_image_attach_contiguous_mem(num, convertto_imgs, input_tensor.device_mem);
         assert(BM_SUCCESS == ret);
-
+ 
         bmcv_convert_to_attr convert_to_attr;
         convert_to_attr.alpha_0 = alpha;
         convert_to_attr.alpha_1 = alpha;
@@ -142,22 +142,22 @@ int YoloV5::preprocess(std::vector<bm::FrameBaseInfo>& frames, std::vector<bm::F
         convert_to_attr.beta_0  = beta;
         convert_to_attr.beta_1  = beta;
         convert_to_attr.beta_2  = beta;
-
+ 
         ret = bmcv_image_convert_to(m_bmctx->handle(), num, convert_to_attr, resized_imgs, convertto_imgs);
         assert(ret == 0);
-
+ 
         bm_image_dettach_contiguous_mem(num, convertto_imgs);
-
+ 
         finfo.input_tensors.push_back(input_tensor);
-
+ 
         bm::BMImage::destroy_batch(resized_imgs, num);
         bm::BMImage::destroy_batch(convertto_imgs, num);
-
+ 
         frame_infos.push_back(finfo);
     }
     return 0;
 }
-
+ 
 int YoloV5::forward(std::vector<bm::FrameInfo>& frame_infos)
 {
     int ret = 0;
@@ -166,7 +166,7 @@ int YoloV5::forward(std::vector<bm::FrameInfo>& frame_infos)
             bm_tensor_t tensor;
             frame_infos[b].output_tensors.push_back(tensor);
         }
-
+ 
 #if DUMP_FILE
         bm::BMImage::dump_dev_memory(bmctx_->handle(), frame_infos[b].input_tensors[0].device_mem, "convertto",
                 frame_infos[b].frames.size(), m_net_h, m_net_w, false, false);
@@ -175,24 +175,24 @@ int YoloV5::forward(std::vector<bm::FrameInfo>& frame_infos)
                                frame_infos[b].output_tensors.data(), frame_infos[b].output_tensors.size());
         assert(BM_SUCCESS == ret);
     }
-
+ 
     return 0;
 }
-
+ 
 int YoloV5::postprocess(std::vector<bm::FrameInfo> &frame_infos)
 {
     for(int i=0;i < frame_infos.size(); ++i) {
-
+ 
         // Free AVFrames
         auto &frame_info = frame_infos[i];
-
+ 
         // extract face detection
         extract_yolobox_cpu(frame_info);
-
+ 
         if (m_pfnDetectFinish != nullptr) {
             m_pfnDetectFinish(frame_info);
         }
-
+ 
 //         for(int j = 0; j < frame_info.frames.size(); ++j) {
 //
 //             auto reff = frame_info.frames[j];
@@ -217,16 +217,16 @@ int YoloV5::postprocess(std::vector<bm::FrameInfo> &frame_infos)
 //         if (m_nextMediaPipe) {
 //             m_nextMediaPipe->push_frame(frame_info);
 //         }
-
+ 
     }
     return 0;
 }
-
+ 
 float YoloV5::sigmoid(float x)
 {
     return 1.0 / (1 + expf(-x));
 }
-
+ 
 int YoloV5::argmax(float* data, int num) {
     float max_value = 0.0;
     int max_index = 0;
@@ -237,10 +237,10 @@ int YoloV5::argmax(float* data, int num) {
             max_index = i;
         }
     }
-
+ 
     return max_index;
 }
-
+ 
 float YoloV5::get_aspect_scaled_ratio(int src_w, int src_h, int dst_w, int dst_h, bool *pIsAligWidth)
 {
     float ratio;
@@ -253,26 +253,26 @@ float YoloV5::get_aspect_scaled_ratio(int src_w, int src_h, int dst_w, int dst_h
         *pIsAligWidth = true;
         ratio = (float)src_h/src_w;
     }
-
+ 
     return ratio;
 }
-
-
+ 
+ 
 void YoloV5::NMS(bm::NetOutputObjects &dets, float nmsConfidence)
 {
     int length = dets.size();
     int index = length - 1;
-
+ 
     std::sort(dets.begin(), dets.end(), [](const bm::NetOutputObject& a, const bm::NetOutputObject& b) {
         return a.score < b.score;
     });
-
+ 
     std::vector<float> areas(length);
     for (int i=0; i<length; i++)
     {
         areas[i] = dets[i].width() * dets[i].height();
     }
-
+ 
     while (index  > 0)
     {
         int i = 0;
@@ -297,7 +297,7 @@ void YoloV5::NMS(bm::NetOutputObjects &dets, float nmsConfidence)
         index--;
     }
 }
-
+ 
 void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
 {
     std::vector<bm::NetOutputObject> yolobox_vec;
@@ -312,7 +312,7 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
 #if USE_ASPECT_RATIO
         bool isAlignWidth = false;
         float ratio = get_aspect_scaled_ratio(frame.width, frame.height, m_net_w, m_net_h, &isAlignWidth);
-
+ 
         if (isAlignWidth) {
             frame_height = frame_width*(float)m_net_h/m_net_w;
             ty1 = (int)((m_net_h - (int)(m_net_w*ratio)) / 2);
@@ -321,10 +321,10 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
             tx1 = (int)((m_net_w - (int)(m_net_w*ratio)) / 2);
         }
 #endif
-
+ 
         int output_num = m_bmnet->outputTensorNum();
         int nout = m_class_num + 5;
-
+ 
         if (output_num == 1) {
             bm::BMNNTensor output_tensor(m_bmctx->handle(), "", m_bmnet->get_output_scale(0), &frameInfo.output_tensors[0]);
             int box_num = output_tensor.get_shape()->dims[1];
@@ -384,9 +384,10 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
                             
                             box.score = confidence * score;
                             box.class_id = class_id;
-
-                            yolobox_vec.push_back(box);
-                            
+ 
+                            if (box.score >= m_confThreshold) {
+                                yolobox_vec.push_back(box);
+                            }
                         }
                         ptr += (m_class_num + 5);
                     }
@@ -396,7 +397,6 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
             std::cerr << "Unsupported yolo ouput layer num: " << output_num << std::endl;
             assert(output_num == 1 || output_num == 3);
         }
-
 #if USE_MULTICLASS_NMS
         std::vector<bm::NetOutputObjects> class_vec(m_class_num);
         for (auto& box : yolobox_vec){
@@ -416,9 +416,9 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
         frameInfo.out_datums.push_back(datum);
     }
     return;
-
+ 
 }
-
+ 
 int YoloV5::track(std::vector<bm::FrameInfo> &frames) {
     for (int i = 0; i < frames.size(); ++i) {
         auto &frame_info = frames[i];
@@ -439,12 +439,12 @@ int YoloV5::track(std::vector<bm::FrameInfo> &frames) {
                     std::cerr << "unknown channel id " << frame_info.frames[j].chan_id << " when tracking" << std::endl;
                 }               
             }
-
+ 
 //            auto reff = frame_info.frames[j];
 //            assert(reff.avpkt != nullptr);
 //            av_packet_unref(reff.avpkt);
 //            av_packet_free(&reff.avpkt);
-
+ 
             //assert(reff.avframe == nullptr);
 //            av_frame_unref(reff.avframe);
 //            av_frame_free(&reff.avframe);
@@ -457,14 +457,14 @@ int YoloV5::track(std::vector<bm::FrameInfo> &frames) {
             bm_free_device(m_bmctx->handle(), tensor.device_mem);
             memset(&tensor.device_mem, 0, sizeof(tensor.device_mem));
         }
-
+ 
         for(auto& tensor: frame_info.output_tensors) {
             if (tensor.device_mem.size == 0)
                 continue;
             bm_free_device(m_bmctx->handle(), tensor.device_mem);
             memset(&tensor.device_mem, 0, sizeof(tensor.device_mem));
         }
-
+ 
         if (m_nextMediaPipe) {
             m_nextMediaPipe->push_frame(frame_info);
         }

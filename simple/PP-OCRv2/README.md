@@ -27,6 +27,7 @@
 
 PP-OCRv2，是百度飞桨团队开源的超轻量OCR系列模型，包含文本检测、文本分类、文本识别模型，是PaddleOCR工具库的重要组成之一。支持中英文数字组合识别、竖排文本识别、长文本识别，其性能及精度较PP-OCR均有明显提升。
 
+
 **参考repo:** [PaddleOCR-release-2.4](https://github.com/PaddlePaddle/PaddleOCR/tree/release/2.4)
 
 **例程特性：**  
@@ -43,21 +44,70 @@ PP-OCRv2，是百度飞桨团队开源的超轻量OCR系列模型，包含文本
 
 ### 3.1 准备开发环境
 
-模型转换验证和程序编译必须在开发环境中完成，我们需要一台x86主机作为开发环境，并且在我们提供的基于Ubuntu18.04的docker镜像中，使用我们的SophonSDK进行模型转换和量化。如果我们的x86主机插有PCIe加速卡可使用PCIe模式，如果没有可使用CModel模式。
+开发环境是指用于模型转换或验证以及程序编译等开发过程的环境，目前只支持x86，建议使用我们提供的基于Ubuntu16.04的docker镜像。
 
-- 从宿主机SDK根目录下执行脚本进入docker环境  
+运行环境是具备Sophon设备的平台上实际使用设备进行算法应用部署的环境，有PCIe加速卡、SM5模组、SE5边缘计算盒子等，所有运行环境上的BModel都是一样的，SDK中各模块的接口也是一致的。
+
+开发环境与运行环境可能是统一的（如插有SC5加速卡的x86主机，既是开发环境又是运行环境），也可能是分离的（如使用x86主机作为开发环境转换模型和编译程序，使用SE5盒子部署运行最终的算法应用）。
+
+但是，无论使用的产品是SoC模式还是PCIe模式，都需要一台x86主机作为开发环境，模型的转换工作必须在开发环境中完成。
+
+#### 3.1.1 开发主机准备：
+
+- 开发主机：一台安装了Ubuntu16.04/18.04/20.04的x86主机，运行内存建议12GB以上
+
+- 安装docker：参考《[官方教程](https://docs.docker.com/engine/install/)》，若已经安装请跳过
+
+#### 3.1.2 SDK软件包下载：
+
+- 开发docker基础镜像：[点击前往官网下载Ubuntu开发镜像](https://developer.sophgo.com/site/index/material/11/44.html)，Ubuntu 16.04 with Python 3.7
+
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/03/19/13/bmnnsdk2-bm1684-ubuntu-docker-py37.zip
+  ```
+
+- SDK软件包：[点击前往官网下载SDK软件包](https://developer.sophgo.com/site/index/material/17/45.html)
+
+  ```bash
+  wget https://sophon-file.sophon.cn/sophon-prod-s3/drive/22/05/31/11/bmnnsdk2_bm1684_v2.7.0_20220531patched.zip
+  ```
+
+#### 3.1.3 创建docker开发环境：
+
+- 加载docker镜像:
+
+```bash
+docker load -i bmnnsdk2-bm1684-ubuntu.docker
 ```
-./docker_run_<***>sdk.sh
+
+- 解压缩SDK：
+
+```bash
+tar zxvf bmnnsdk2-bm1684_v2.7.0.tar.gz
 ```
-- 在docker容器内安装依赖库及和设置环境变量
+
+- 创建docker容器，SDK将被挂载映射到容器内部供使用：
+
+```bash
+cd bmnnsdk2-bm1684_v2.7.0
+# 若您没有执行前述关于docker命令免root执行的配置操作，需在命令前添加sudo
+./docker_run_bmnnsdk.sh
 ```
-# 在docker容器内执行
-cd $REL_TOP/scripts
-# 安装库
+
+- 进入docker容器中安装库：
+
+```bash
+# 进入容器中执行
+cd  /workspace/scripts/
 ./install_lib.sh nntc
-# 设置环境变量，注意此命令只对当前终端有效，重新进入需要重新执行
-source envsetup_pcie.sh    # for PCIE MODE
-source envsetup_cmodel.sh  # for CMODEL MODE
+```
+
+- 设置环境变量：
+
+```bash
+# 配置环境变量，这一步会安装一些依赖库，并导出环境变量到当前终端
+# 导出的环境变量只对当前终端有效，每次进入容器都需要重新执行一遍，或者可以将这些环境变量写入~/.bashrc，这样每次登录将会自动设置环境变量
+source envsetup_pcie.sh
 ```
 
 ### 3.2 准备模型与数据
@@ -65,6 +115,9 @@ source envsetup_cmodel.sh  # for CMODEL MODE
 进入本例程的工作目录后，可通过运行`scripts/download.sh`将相关模型下载至`data/models`，将数据集下载并解压至`data/images/`。
 
 ```bash
+# 视情况安装相关工具
+apt update
+apt install curl
 # 下载相关模型与数据
 ./scripts/download.sh
 ```
@@ -84,7 +137,7 @@ ppocr_img: 用于测试的相关图片
 
 #### 3.2.1 准备量化集
 
-TODO
+待整理
 
 ## 4. 模型转换
 
@@ -131,25 +184,18 @@ output: save_infer_model/scale_0.tmp_1, [1, 320, 6625], float32, scale: 1
 
 ### 4.2 生成INT8 BModel
 
-TODO
+待整理
 
 ## 5. 推理测试
 
 ### 5.1 环境配置
 
-#### 5.1.1 x86 PCIe
+#### 5.1.1 x86 SC5
 
-对于x86 PCIe平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
+对于x86 SC5平台，程序执行所需的环境变量执行`source envsetup_pcie.sh`时已经配置完成。
 
-由于Python例程用到sail库，需安装Sophon Inference：
-
-```bash
-# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7 
-pip3 install $REL_TOP/lib/sail/python3/pcie/py37/sophon-*-py3-none-any.whl
-```
-
-#### 5.1.2 arm SoC
-对于arm SoC平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
+#### 5.1.2 arm SE5
+对于arm SE5平台，内部已经集成了相应的SDK运行库包，位于/system目录下，只需设置环境变量即可。
 
 ```bash
 # 设置环境变量
@@ -158,24 +204,15 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/system/lib/:/system/usr/lib/aarch64-lin
 export PYTHONPATH=$PYTHONPATH:/system/lib
 ```
 
-如果您使用的设备是Debian系统，您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
-```bash
-# 对于Debian9，请指定numpy版本为1.17.2
-sudo apt update
-sudo apt-get install python3-pip
-sudo pip3 install numpy==1.17.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-如果您使用的设备是Ubuntu20.04系统，系统内已经集成了numpy环境，不需要进行额外的安装。
+您可能需要安装numpy包，以在Python中使用OpenCV和SAIL：
 
-您还需要安装以下依赖和工具:
 ```bash
-sudo apt-get install -y libgeos-dev libjpeg-dev zlib1g-dev
-pip3 install setuptools-scm
+# 请指定numpy版本为1.17.2
+sudo pip3 install numpy==1.17.2
 ```
 
 ### 5.2 C++例程推理
-
-TODO
+(待整理)
 
 ### 5.3 Python例程推理
 
@@ -190,16 +227,27 @@ TODO
 
 - 环境配置
 
+由于Python例程用到sail库，需安装Sophon Inference：
+
+```bash
+# 确认平台及python版本，然后进入相应目录，比如x86平台，python3.7
+cd $REL_TOP/lib/sail/python3/pcie/py37
+pip3 install sophon-x.x.x-py3-none-any.whl
+```
+
 还需安装其他第三方库：
 ```bash
+# 回到工程目录
+cd -
 pip3 install -r inference/python/requirements.txt
 ```
 
-Python代码无需编译，无论是x86 PCIe平台还是arm SoC平台配置好环境之后就可直接运行。
+Python代码无需编译，无论是x86 SC5平台还是arm SE5平台配置好环境之后就可直接运行。
 
-> **使用bm_opencv解码的注意事项：** x86 PCIe平台默认使用原生opencv，arm SoC平台默认使用bm_opencv。使用bm_opencv解码可能会导致推理结果的差异。若要在x86 PCIe平台使用bm_opencv可添加环境变量如下：
+> **使用bm_opencv解码的注意事项：** 默认使用原生opencv，若使用bm_opencv解码可能会导致推理结果的差异。若要使用bm_opencv可添加环境变量如下：
+
 ```bash
-export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/pcie/opencv-python/
+export PYTHONPATH=$PYTHONPATH:$REL_TOP/lib/opencv/x86/opencv-python/
 ```
 
 出现中文无法正常显示的解决办法：
@@ -239,8 +287,6 @@ usage:det_cv_cv_sail.py [--tpu_id] [--img_path] [--det_model] [--det_batch_size]
 python3 inference/python/det_cv_cv_sail.py --tpu_id 0  --img_path data/images/ppocr_img/test --det_model data/models/fp32bmodel/ch_PP-OCRv2_det_fp32_b1b4.bmodel --det_batch_size 4
 ```
 执行完成后，会将预测的可视化结果保存在`./inference_results`文件夹下。
-
-![avatar](docs/det_res_11.jpg)
 
 - 文本方向分类
 
@@ -293,7 +339,7 @@ usage:rec_cv_cv_sail.py [--tpu_id] [--img_path] [--rec_model] [--rec_batch_size]
 ```bash
 python3 inference/python/rec_cv_cv_sail.py --tpu_id 0  --img_path data/images/ppocr_img/imgs_words/ch --rec_model data/models/fp32bmodel/ch_PP-OCRv2_rec_fp32_b1b4.bmodel --rec_batch_size 4 --char_dict_path ppocr_keys_v1.txt  --use_space_char True
 ```
-执行完成后，会打印预测的文本内容及置信度如下：
+执行完成后，会打印预测的类别及置信度如下：
 
 ```bash
 INFO:root:img_name:word_4.jpg, conf:0.966046, pred:实力活力
@@ -319,21 +365,19 @@ python3 inference/python/system_cv_cv_sail.py --use_angle_cls True --drop_score 
 ```
 执行完成后，会打印预测的字段，同时会将预测的可视化结果保存在`./inference_results`文件夹下。
 
-![avatar](docs/ocr_res_11.jpg)
-
 ### 5.4 精度与性能测试
 #### 5.4.1 精度测试
-TODO
+待整理
 #### 5.4.2 性能测试
-TODO
+待整理
 ## 6. 流程化部署
 (暂无)
 
 ## 7. 自动化测试
-(TODO)
+(待整理)
 
 ## 8. LICENSE
 本项目的发布受[Apache 2.0 license](LICENSE)许可认证。
 
 ## 9. 参考链接与文献
-(TODO)
+(待整理)

@@ -370,8 +370,8 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
                             box.y1  = int(centerY - height / 2);
                             box.x2  = box.x1 + width;
                             box.y2  = box.y1 + height;
-                            
-                            box.score = confidence * score;
+                            int class_id = argmax(&ptr[5], m_class_num);
+                            box.score = sigmoid(ptr[class_id + 5]) * score;
                             box.class_id = class_id;
 
                             yolobox_vec.push_back(box);
@@ -381,9 +381,6 @@ void YoloV5::extract_yolobox_cpu(bm::FrameInfo& frameInfo)
                     }
                 }
             } // end of tidx
-        } else {
-            std::cerr << "Unsupported yolo ouput layer num: " << output_num << std::endl;
-            assert(output_num == 1 || output_num == 3);
         }
 
 #if USE_MULTICLASS_NMS

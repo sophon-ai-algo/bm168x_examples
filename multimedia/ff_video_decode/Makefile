@@ -3,10 +3,10 @@ DEBUG        ?= 0
 PRODUCTFORM  ?= soc
 
 INSTALL_DIR    ?= release
-top_dir := $(REL_TOP)
+top_dir :=../../..
 
-ifeq ($(PRODUCTFORM),pcie) # pcie mode
-   CROSS_CC_PREFIX = 
+ifeq ($(PRODUCTFORM),x86) # pcie mode
+    CROSS_CC_PREFIX = x86_64-linux-
 endif
 
 ifeq ($(PRODUCTFORM),soc)
@@ -17,9 +17,9 @@ ifeq ($(PRODUCTFORM),arm_pcie)
     CROSS_CC_PREFIX = aarch64-linux-gnu-
 endif
 
-#ifeq ($(PRODUCTFORM),loongarch64)
-#    CROSS_CC_PREFIX = loongarch64-linux-gnu-
-#endif
+ifeq ($(PRODUCTFORM),loongarch64)
+    CROSS_CC_PREFIX = loongarch64-linux-gnu-
+endif
 
 CC  = $(CROSS_CC_PREFIX)gcc
 CXX = $(CROSS_CC_PREFIX)g++
@@ -29,10 +29,6 @@ ifeq ($(DEBUG), 0)
     CFLAGS += -O2
 else
     CFLAGS += -g
-endif
-
-ifneq ($(PRODUCTFORM),soc)
-    CFLAGS += -DBM_PCIE_MODE=1
 endif
 
 # NATIVE API SDK
@@ -58,30 +54,30 @@ FF_SDK_LDLIBS  := -lavfilter -lavformat -lavcodec -lswscale -lavutil -lswresampl
 
 CFLAGS  += $(NATIVE_SDK_HEADERS) $(FF_SDK_HEADERS)
 LDFLAGS := $(NATIVE_SDK_LDFLAGS) $(FF_SDK_LDFLAGS)
-LDLIBS  := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lpthread -lm
+LDLIBS  := $(FF_SDK_LDLIBS) $(NATIVE_SDK_LDLIBS) -lpthread
 
 ifeq ($(PRODUCTFORM),loongarch64)
 LDLIBS   += -lm -lpthread  -lresolv  -lrt  -ldl -lstdc++
 endif
 
 
-TARGET=test_ff_video_decode
+TARGET=test_bm_restart
 MAKEFILE=Makefile
 ALLOBJS=*.o
 ALLDEPS=*.dep
 RM=rm -rf
 CP=cp -f
 
-SOURCES := ff_video_decode.cpp test_ff_video_decode.cpp
+SOURCES := demuxing_decoding_bm_restart.c
 
-OBJECTPATHS:=$(patsubst %.cpp,%.o,$(SOURCES))
+OBJECTPATHS:=$(patsubst %.c,%.o,$(SOURCES))
 
 .phony: all clean
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTPATHS)
-	$(CXX) -o $@ $(OBJECTPATHS) $(LDFLAGS) $(LDLIBS)
+	$(CC) -o $@ $(OBJECTPATHS) $(LDFLAGS) $(LDLIBS)
 
 install: $(TARGET)
 	install -d $(INSTALL_DIR)/bin
@@ -95,7 +91,5 @@ clean:
 	$(RM) $(ALLDEPS)
 	$(RM) $(ALLOBJS)
 
-ff_video_decode.o : ff_video_decode.cpp $(MAKEFILE)
-	$(CXX) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
-test_ff_video_decode.o : test_ff_video_decode.cpp $(MAKEFILE)
-	$(CXX) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+demuxing_decoding_bm_restart.o : demuxing_decoding_bm_restart.c $(MAKEFILE)
+	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
