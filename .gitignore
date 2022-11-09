@@ -1,0 +1,8 @@
+.idea/
+.vscode/
+.DS_Store
+cmake-build-debug/
+nntc/__script*.sh
+nntc/**/output
+nntc/**/python-output
+nntc/**/tmp*
