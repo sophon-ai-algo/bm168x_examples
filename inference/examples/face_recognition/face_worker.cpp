@@ -116,10 +116,17 @@ void OneCardInferApp::start(const std::vector<std::string>& urls, Config& config
 
         pchan->decoder->set_avformat_opend_callback([this, pchan](AVFormatContext *ifmt) {
             if (pchan->outputer) {
-                size_t pos = m_output_url.rfind(":");
-                std::string base_url = m_output_url.substr(0, pos);
-                int base_port = std::strtol(m_output_url.substr(pos + 1).c_str(), 0, 10);
-                std::string url = bm::format("%s:%d", base_url.c_str(), base_port + pchan->channel_id);
+                std::string url;
+
+                if (bm::start_with(m_output_url, "rtsp://")) {
+                    std::string connect = "_";
+                    url = bm::format("%s%s%d", m_output_url.c_str(), connect.c_str(), pchan->channel_id);
+                }else{
+                    size_t pos = m_output_url.rfind(":");
+                    std::string base_url = m_output_url.substr(0, pos);
+                    int base_port = std::strtol(m_output_url.substr(pos + 1).c_str(), 0, 10);
+                    url = bm::format("%s:%d", base_url.c_str(), base_port + pchan->channel_id);
+                }
                 pchan->outputer->OpenOutputStream(url, ifmt);
             }
         });

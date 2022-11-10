@@ -81,10 +81,15 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
    链接：https://pan.baidu.com/s/16d5E_NTj4ubVPkPmR6GG5A 
    提取码：sp2w 
 
+   > 特別注意:`openpose`的模型`openpose_200_200.bmodel`已弃用!!!
+   请使用[NAS网盘](http://219.142.246.77:65000/sharing/cyJOgo8Te)中的新openpose量化模型: `openpose_coco_17_216_384.bmodel`或`openpose_body_25_216_384.bmodel`
+
 ## 客户端服务器模式运行
 ---
 > 演示程序支持远程显示，应用于SE5/SM5等没有本地界面的平台，检测程序在设备端进行检测，然后讲结果发送到一个指定的目的地址，客户端负责接收带有结果的流，然后显示。
 具体配置方法，请参考[SE5-OpenPose-Demo配置文档.docx](./SE5-OpenPose-Demo-Config.docx)  
 
-> 客户端的源代码请参考如下链接：https://github.com/sophon-ai-algo/face_demo_client
+> 客户端的源代码请参考如下链接：https://github.com/sophon-ai-algo/pipeline_client
+> windows可执行文件下载链接：https://github.com/sophon-ai-algo/pipeline_client/releases
+
 
