@@ -92,5 +92,6 @@ sudo apt-get install -y libgoogle-glog-dev libexiv2-dev
 > 演示程序支持远程显示，应用于SE5/SM5等没有本地界面的平台，检测程序在设备端进行检测，然后讲结果发送到一个指定的目的地址，客户端负责接收带有结果的流，然后显示。
 具体配置方法，请参考[SE5-OpenPose-Demo配置文档.docx](./SE5-OpenPose-Demo-Config.docx)  
 
-> 客户端的源代码请参考如下链接：https://github.com/sophon-ai-algo/face_demo_client
+> 客户端的源代码请参考如下链接：https://github.com/sophon-ai-algo/pipeline_client
+> windows可执行文件下载链接：https://github.com/sophon-ai-algo/pipeline_client/releases
 
