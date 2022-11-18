@@ -44,21 +44,6 @@ int FaceExtract::preprocess(std::vector <bm::FrameInfo2> &frame_infos)
             int face_num = rcs.size();
 
             if (face_num > 0) {
-                bmcv_rect_t crop_rects[face_num];
-                frame_info.frames[frameIdx].crop_bmimgs.resize(face_num);
-                for (int k = 0; k < face_num; k++) {
-                    rcs[k].to_bmcv_rect(&crop_rects[k]);
-                    ret = bm::BMImage::create_batch(handle, crop_rects[k].crop_h, crop_rects[k].crop_w,
-                                                    FORMAT_RGB_PLANAR, DATA_TYPE_EXT_1N_BYTE,
-                                                    &frame_info.frames[frameIdx].crop_bmimgs[k], 1, 64);
-                    assert(BM_SUCCESS == ret);
-                }
-
-                ret = bmcv_image_crop(handle, face_num, crop_rects,
-                                      frame_info.frames[frameIdx].origin_image,
-                                      frame_info.frames[frameIdx].crop_bmimgs.data());
-                assert(BM_SUCCESS == ret);
-
                 // gather all crop images
                 crop_images.insert(crop_images.end(), frame_info.frames[frameIdx].crop_bmimgs.begin(),
                                    frame_info.frames[frameIdx].crop_bmimgs.end());
