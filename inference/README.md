@@ -32,7 +32,7 @@ Inference的主要结构设计如下图：
 # 编译方法
 ## 依赖安装
 Inference framework 依赖 SophonSDK. 请到算能官网（www.sophgo.com) 进行下载，解压、安装。  SDK的安装方法可以参考如下链接： 
-> https://sophgo-doc.gitbook.io/sophonsdk/
+> https://sophgo-doc.gitbook.io/sophonsdk3/
 
 > Ubuntu 安装QT依赖：
 ````
