@@ -5,7 +5,8 @@
 #include "face_extract.h"
 
 FaceExtract::FaceExtract(bm::BMNNContextPtr bmctx, int max_batch):m_bmctx(bmctx),MAX_BATCH(max_batch) {
-    m_bmnet = std::make_shared<bm::BMNNNetwork>(m_bmctx->bmrt(), "r50i-model");
+    auto net_name = bmctx->network_name(1);
+    m_bmnet = std::make_shared<bm::BMNNNetwork>(m_bmctx->bmrt(), net_name);
     assert(m_bmnet != nullptr);
     m_alpha_int8 = 1.003921316;
     m_beta_int8  = -127.5 * 1.003921316;
